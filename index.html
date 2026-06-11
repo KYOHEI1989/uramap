@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>業務分解マップ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toolbar">
+    <span class="app-title">業務分解マップ</span>
+    <div class="toolbar-actions">
+      <button id="btn-add-main" title="大タイトルを追加">＋ 大タイトル</button>
+      <button id="btn-add-sub" title="サブタイトルを追加（大タイトルを選択中のみ）" disabled>＋ サブ追加</button>
+      <button id="btn-delete" title="選択中のノード/線を削除" disabled>🗑 削除</button>
+      <span class="separator"></span>
+      <button id="btn-reset-layout" title="レイアウトリセット">⟳ リセット</button>
+      <button id="btn-clear-all" title="全削除">全削除</button>
+    </div>
+    <span class="toolbar-hint">クリック: 選択 ｜ ドラッグ: 移動/接続/切断 ｜ Delete: 削除</span>
+  </div>
+  <svg id="graph"></svg>
+  <div id="input-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <label class="modal-label" id="modal-label">タスク名を入力</label>
+      <input type="text" id="modal-input" class="modal-input" placeholder="タスク名..." autofocus>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="modal-btn">キャンセル</button>
+        <button id="modal-ok" class="modal-btn modal-btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
