@@ -236,10 +236,45 @@ const regions = [
   { name:'九州・沖縄', prefs:[{name:'福岡',hot:true},{name:'熊本'},{name:'鹿児島'},{name:'長崎'},{name:'大分'},{name:'佐賀'},{name:'宮崎'},{name:'沖縄',hot:true}] }
 ];
 
+// ── URL（ハッシュ）設定 ──
+// #カテゴリ/都道府県 の形式（例: #papa/tokyo）で共有・ブックマーク可能
+const prefSlugs = {
+  '北海道':'hokkaido','青森':'aomori','岩手':'iwate','宮城':'miyagi','秋田':'akita','山形':'yamagata','福島':'fukushima',
+  '東京':'tokyo','神奈川':'kanagawa','埼玉':'saitama','千葉':'chiba','群馬':'gunma','栃木':'tochigi','茨城':'ibaraki',
+  '新潟':'niigata','富山':'toyama','石川':'ishikawa','福井':'fukui','山梨':'yamanashi','長野':'nagano',
+  '愛知':'aichi','静岡':'shizuoka','岐阜':'gifu','三重':'mie',
+  '大阪':'osaka','京都':'kyoto','兵庫':'hyogo','奈良':'nara','滋賀':'shiga','和歌山':'wakayama',
+  '広島':'hiroshima','岡山':'okayama','山口':'yamaguchi','鳥取':'tottori','島根':'shimane','香川':'kagawa','愛媛':'ehime','高知':'kochi','徳島':'tokushima',
+  '福岡':'fukuoka','熊本':'kumamoto','鹿児島':'kagoshima','長崎':'nagasaki','大分':'oita','佐賀':'saga','宮崎':'miyazaki','沖縄':'okinawa'
+};
+const slugToPref = Object.fromEntries(Object.entries(prefSlugs).map(([k, v]) => [v, k]));
+const prefRegion = {};
+regions.forEach(r => r.prefs.forEach(p => { prefRegion[p.name] = r.name; }));
+
 function enterSite() {
+  localStorage.setItem('uramap-age-ok', '1');
+  showSite();
+}
+
+function showSite() {
   document.getElementById('ageGate').classList.add('hidden');
   document.getElementById('mainContent').style.display = 'block';
-  requestAnimationFrame(() => { renderList(); updateTrending(); });
+  requestAnimationFrame(() => { renderList(); applyHash(); });
+}
+
+// URLハッシュを読んで画面状態を復元する（戻る/進むボタンにも対応）
+function applyHash() {
+  const parts = decodeURIComponent(location.hash.slice(1)).split('/');
+  const cat = catConfig[parts[0]] ? parts[0] : 'ura';
+  setCat(cat);
+  const pref = slugToPref[parts[1] || ''];
+  if (pref) {
+    showModal(pref);
+    document.title = `${pref}の${catConfig[cat].label} | UraMap`;
+  } else {
+    hideModal();
+    document.title = `UraMap - ${catConfig[cat].label} 地域検索ポータル`;
+  }
 }
 
 function renderList() {
@@ -251,16 +286,20 @@ function renderList() {
         <div class="region-count">${r.prefs.length}件</div>
       </div>
       <div class="pref-grid">
-        ${r.prefs.map(p => `<div class="pref-btn${p.hot?' hot':''}" onclick="openModal('${p.name}','${r.name}')">${p.name}</div>`).join('')}
+        ${r.prefs.map(p => `<div class="pref-btn${p.hot?' hot':''}" onclick="openModal('${p.name}')">${p.name}</div>`).join('')}
       </div>
     </div>
   `).join('');
 }
 
-function switchCat(cat) {
+// タブ・都道府県クリックはURLハッシュを変えるだけ。実際の描画はapplyHashが行う
+function switchCat(cat) { setCat(cat); location.hash = cat; }
+function openModal(pref) { location.hash = `${currentCat}/${prefSlugs[pref]}`; }
+function closeModal() { location.hash = currentCat; }
+
+function setCat(cat) {
   currentCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`[data-cat="${cat}"]`).classList.add('active');
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
   document.getElementById('mainContent').setAttribute('data-theme', cat);
   updateTrending();
 }
@@ -271,11 +310,11 @@ function updateTrending() {
   ).join('');
 }
 
-function openModal(pref, region) {
+function showModal(pref) {
   const cfg = catConfig[currentCat];
   document.getElementById('modalPref').textContent = pref;
   document.getElementById('modalPref').style.color = cfg.color;
-  document.getElementById('modalRegion').textContent = region;
+  document.getElementById('modalRegion').textContent = prefRegion[pref];
 
   // X検索リンク（クリックでXアプリ起動＋現在タブをアフィリへ）
   document.getElementById('searchButtons').innerHTML = cfg.tags.map((tag, i) => {
@@ -312,9 +351,15 @@ function openXAndAffiliate(xUrl, affiliateUrl) {
   }, 300);
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function hideModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// 戻る/進むボタン・URL直接入力に対応
+window.addEventListener('hashchange', applyHash);
+
+// 年齢確認済みならゲートをスキップして即表示（共有URLから直接開けるように）
+if (localStorage.getItem('uramap-age-ok') === '1') showSite();
 </script>
 </body>
 </html>
