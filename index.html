@@ -52,6 +52,29 @@ header{text-align:center;padding:28px 20px 8px}
 .pref-btn{padding:14px 8px;border-radius:10px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:rgba(255,255,255,.55);position:relative}
 .pref-btn:hover{color:#fff;transform:translateY(-2px)}
 .pref-btn.hot::after{content:'HOT';position:absolute;top:-6px;right:-2px;font-size:7px;font-weight:900;color:#fff;background:#ef4444;border-radius:4px;padding:1px 4px;letter-spacing:.5px}
+.pref-btn.hot{z-index:1}
+
+/* ── 表示切替（地図/リスト） ── */
+.view-toggle{display:flex;justify-content:center;gap:6px;max-width:820px;margin:0 auto 6px;padding:0 16px}
+.view-btn{padding:7px 20px;border-radius:100px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.view-btn:hover{color:#fff}
+.view-btn.active{border-color:rgba(255,255,255,.25);color:#fff;background:rgba(255,255,255,.08)}
+
+/* ── 日本地図（タイル型） ── */
+.map-wrap{max-width:820px;margin:0 auto;padding:10px 16px 24px;overflow-x:auto}
+.japan-map{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;min-width:530px}
+.map-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;padding:0;font-size:clamp(10px,1.55vw,13px);letter-spacing:-.5px;border-radius:8px;color:rgba(255,255,255,.65)}
+/* 地方ごとの薄い色分け（地図を読みやすくするため） */
+.map-cell.rg0{background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.2)}
+.map-cell.rg1{background:rgba(167,139,250,.07);border-color:rgba(167,139,250,.22)}
+.map-cell.rg2{background:rgba(45,212,191,.07);border-color:rgba(45,212,191,.2)}
+.map-cell.rg3{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2)}
+.map-cell.rg4{background:rgba(251,113,133,.07);border-color:rgba(251,113,133,.22)}
+.map-cell.rg5{background:rgba(163,230,53,.06);border-color:rgba(163,230,53,.18)}
+.map-cell.rg6{background:rgba(251,146,60,.07);border-color:rgba(251,146,60,.2)}
+.map-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;font-size:10px;color:rgba(255,255,255,.35)}
+.map-legend span{display:flex;align-items:center;gap:4px}
+.map-legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
 
 [data-theme="ura"] .pref-btn:hover{background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.4);box-shadow:0 0 12px rgba(167,139,250,.15)}
 [data-theme="ura"] .region-name{color:#c4b5fd}
@@ -149,6 +172,16 @@ footer{text-align:center;padding:24px;font-size:11px;color:rgba(255,255,255,.15)
     <span>出会いを探すなら → <strong>ハッピーメール</strong>【無料登録】</span>
     <span style="font-size:18px">→</span>
   </a>
+</div>
+
+<div class="view-toggle">
+  <button class="view-btn active" data-view="map" onclick="switchView('map')">&#x1F5FE; 地図から選ぶ</button>
+  <button class="view-btn" data-view="list" onclick="switchView('list')">&#x2630; リストから選ぶ</button>
+</div>
+
+<div class="map-wrap" id="mapWrap">
+  <div class="japan-map" id="japanMap"></div>
+  <div class="map-legend" id="mapLegend"></div>
 </div>
 
 <div class="main-list" id="prefList"></div>
@@ -256,10 +289,49 @@ function enterSite() {
   showSite();
 }
 
+// ── タイル型日本地図：都道府県のグリッド座標 [列, 行]（実際の位置関係に対応） ──
+const mapPos = {
+  '北海道':[13,1],'青森':[13,2],'秋田':[12,3],'岩手':[13,3],'山形':[12,4],'宮城':[13,4],'新潟':[11,5],'福島':[12,5],
+  '石川':[9,5],'富山':[10,5],
+  '福井':[8,6],'岐阜':[9,6],'長野':[10,6],'群馬':[11,6],'栃木':[12,6],'茨城':[13,6],
+  '島根':[4,6],'鳥取':[5,6],'兵庫':[6,6],'京都':[7,6],
+  '佐賀':[1,7],'福岡':[2,7],'山口':[3,7],'広島':[4,7],'岡山':[5,7],'大阪':[6,7],'奈良':[7,7],'滋賀':[8,7],'愛知':[9,7],'静岡':[10,7],'山梨':[11,7],'埼玉':[12,7],'千葉':[13,7],
+  '長崎':[1,8],'熊本':[2,8],'大分':[3,8],'愛媛':[4,8],'香川':[5,8],'和歌山':[6,8],'三重':[8,8],'神奈川':[11,8],'東京':[12,8],
+  '鹿児島':[2,9],'宮崎':[3,9],'高知':[5,9],'徳島':[6,9],
+  '沖縄':[1,10]
+};
+const regionColors = ['#38bdf8','#a78bfa','#2dd4bf','#fbbf24','#fb7185','#a3e635','#fb923c'];
+
+let currentView = localStorage.getItem('uramap-view') || 'map';
+
+function switchView(view) {
+  currentView = view;
+  localStorage.setItem('uramap-view', view);
+  applyView();
+}
+
+function applyView() {
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+  document.getElementById('mapWrap').style.display = currentView === 'map' ? '' : 'none';
+  document.getElementById('prefList').style.display = currentView === 'list' ? '' : 'none';
+}
+
+function renderMap() {
+  document.getElementById('japanMap').innerHTML = regions.map((r, i) =>
+    r.prefs.map(p => {
+      const [col, row] = mapPos[p.name];
+      return `<div class="pref-btn map-cell rg${i}${p.hot ? ' hot' : ''}" style="grid-column:${col};grid-row:${row}" onclick="openModal('${p.name}')">${p.name}</div>`;
+    }).join('')
+  ).join('');
+  document.getElementById('mapLegend').innerHTML = regions.map((r, i) =>
+    `<span><i style="background:${regionColors[i]}"></i>${r.name}</span>`
+  ).join('');
+}
+
 function showSite() {
   document.getElementById('ageGate').classList.add('hidden');
   document.getElementById('mainContent').style.display = 'block';
-  requestAnimationFrame(() => { renderList(); applyHash(); });
+  requestAnimationFrame(() => { renderList(); renderMap(); applyView(); applyHash(); });
 }
 
 // URLハッシュを読んで画面状態を復元する（戻る/進むボタンにも対応）
