@@ -60,21 +60,51 @@ header{text-align:center;padding:28px 20px 8px}
 .view-btn:hover{color:#fff}
 .view-btn.active{border-color:rgba(255,255,255,.25);color:#fff;background:rgba(255,255,255,.08)}
 
-/* ── 日本地図（タイル型） ── */
-.map-wrap{max-width:820px;margin:0 auto;padding:10px 16px 24px;overflow-x:auto}
-.japan-map{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;min-width:530px}
-.map-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;padding:0;font-size:clamp(10px,1.55vw,13px);letter-spacing:-.5px;border-radius:8px;color:rgba(255,255,255,.65)}
-/* 地方ごとの薄い色分け（地図を読みやすくするため） */
-.map-cell.rg0{background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.2)}
-.map-cell.rg1{background:rgba(167,139,250,.07);border-color:rgba(167,139,250,.22)}
-.map-cell.rg2{background:rgba(45,212,191,.07);border-color:rgba(45,212,191,.2)}
-.map-cell.rg3{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2)}
-.map-cell.rg4{background:rgba(251,113,133,.07);border-color:rgba(251,113,133,.22)}
-.map-cell.rg5{background:rgba(163,230,53,.06);border-color:rgba(163,230,53,.18)}
-.map-cell.rg6{background:rgba(251,146,60,.07);border-color:rgba(251,146,60,.2)}
-.map-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;font-size:10px;color:rgba(255,255,255,.35)}
-.map-legend span{display:flex;align-items:center;gap:4px}
-.map-legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+/* ── 地図（2段階：全国の地方ブロック → 地方内の県タイル） ── */
+/* カテゴリごとのネオン発光色 */
+[data-theme="ura"]{--glow:167,139,250;--glow2:236,72,153}
+[data-theme="papa"]{--glow:249,115,22;--glow2:251,191,36}
+[data-theme="mama"]{--glow:236,72,153;--glow2:244,114,182}
+
+.map-area{max-width:820px;margin:0 auto;padding:10px 16px 28px}
+
+/* 全国ビュー：地方ブロック */
+.region-map{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:78px;gap:10px}
+.region-block{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border-radius:16px;cursor:pointer;transition:all .25s;position:relative;padding:4px;text-align:center;
+  background:linear-gradient(145deg,rgba(var(--glow),.18),rgba(var(--glow2),.10));
+  border:1px solid rgba(var(--glow),.55);
+  box-shadow:0 0 18px rgba(var(--glow),.22),inset 0 0 24px rgba(var(--glow),.07);
+}
+.region-block:hover{transform:translateY(-3px) scale(1.02);border-color:rgba(var(--glow),.95);box-shadow:0 0 32px rgba(var(--glow),.5),inset 0 0 30px rgba(var(--glow),.14)}
+.rb-name{font-size:clamp(11px,1.9vw,16px);font-weight:900;color:#fff;text-shadow:0 0 10px rgba(var(--glow),.9);word-break:keep-all;line-height:1.3}
+.rb-count{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1px}
+
+/* 地方ビュー：県タイル */
+.detail-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.back-btn{padding:8px 18px;border-radius:100px;border:1px solid rgba(var(--glow),.5);background:rgba(var(--glow),.1);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.back-btn:hover{background:rgba(var(--glow),.25);box-shadow:0 0 14px rgba(var(--glow),.4)}
+.detail-title{font-size:18px;font-weight:900;color:#fff;text-shadow:0 0 12px rgba(var(--glow),.85)}
+.pref-map{display:grid;gap:10px;justify-content:center}
+.map-cell{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:14px;font-size:clamp(12px,2.2vw,16px);font-weight:900;cursor:pointer;transition:all .25s;position:relative;
+  background:linear-gradient(145deg,rgba(var(--glow),.24),rgba(var(--glow2),.13));
+  border:1px solid rgba(var(--glow),.65);color:#fff;text-shadow:0 0 8px rgba(var(--glow),.9);
+  box-shadow:0 0 16px rgba(var(--glow),.28),inset 0 0 20px rgba(var(--glow),.09);
+}
+.map-cell:hover{transform:translateY(-3px) scale(1.06);border-color:rgba(var(--glow),1);box-shadow:0 0 30px rgba(var(--glow),.65),inset 0 0 26px rgba(var(--glow),.16)}
+.map-cell.hot{animation:hotPulse 2.2s ease-in-out infinite}
+@keyframes hotPulse{
+  0%,100%{box-shadow:0 0 16px rgba(var(--glow),.28),inset 0 0 20px rgba(var(--glow),.09)}
+  50%{box-shadow:0 0 32px rgba(var(--glow),.65),inset 0 0 26px rgba(var(--glow),.16)}
+}
+.map-cell.hot::after{content:'HOT';position:absolute;top:-7px;right:-4px;font-size:8px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ef4444,#ec4899);border-radius:5px;padding:2px 5px;letter-spacing:.5px;box-shadow:0 0 8px rgba(239,68,68,.8)}
+@media (max-width:480px){
+  .region-map{gap:6px;grid-auto-rows:66px}
+  .pref-map{gap:7px}
+}
 
 [data-theme="ura"] .pref-btn:hover{background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.4);box-shadow:0 0 12px rgba(167,139,250,.15)}
 [data-theme="ura"] .region-name{color:#c4b5fd}
@@ -179,9 +209,8 @@ footer{text-align:center;padding:24px;font-size:11px;color:rgba(255,255,255,.15)
   <button class="view-btn" data-view="list" onclick="switchView('list')">&#x2630; リストから選ぶ</button>
 </div>
 
-<div class="map-wrap" id="mapWrap">
-  <div class="japan-map" id="japanMap"></div>
-  <div class="map-legend" id="mapLegend"></div>
+<div id="mapView">
+  <div class="map-area" id="mapArea"></div>
 </div>
 
 <div class="main-list" id="prefList"></div>
@@ -260,12 +289,14 @@ const cpaConfig = [
 ];
 
 const regions = [
-  { name:'北海道・東北', prefs:[{name:'北海道',hot:true},{name:'青森'},{name:'岩手'},{name:'宮城',hot:true},{name:'秋田'},{name:'山形'},{name:'福島'}] },
+  { name:'北海道', prefs:[{name:'北海道',hot:true}] },
+  { name:'東北', prefs:[{name:'青森'},{name:'岩手'},{name:'宮城',hot:true},{name:'秋田'},{name:'山形'},{name:'福島'}] },
   { name:'関東', prefs:[{name:'東京',hot:true},{name:'神奈川',hot:true},{name:'埼玉',hot:true},{name:'千葉',hot:true},{name:'群馬'},{name:'栃木'},{name:'茨城'}] },
   { name:'北陸・甲信越', prefs:[{name:'新潟'},{name:'富山'},{name:'石川'},{name:'福井'},{name:'山梨'},{name:'長野'}] },
   { name:'東海', prefs:[{name:'愛知',hot:true},{name:'静岡'},{name:'岐阜'},{name:'三重'}] },
   { name:'関西', prefs:[{name:'大阪',hot:true},{name:'京都',hot:true},{name:'兵庫',hot:true},{name:'奈良'},{name:'滋賀'},{name:'和歌山'}] },
-  { name:'中国・四国', prefs:[{name:'広島',hot:true},{name:'岡山'},{name:'山口'},{name:'鳥取'},{name:'島根'},{name:'香川'},{name:'愛媛'},{name:'高知'},{name:'徳島'}] },
+  { name:'中国', prefs:[{name:'広島',hot:true},{name:'岡山'},{name:'山口'},{name:'鳥取'},{name:'島根'}] },
+  { name:'四国', prefs:[{name:'香川'},{name:'愛媛'},{name:'高知'},{name:'徳島'}] },
   { name:'九州・沖縄', prefs:[{name:'福岡',hot:true},{name:'熊本'},{name:'鹿児島'},{name:'長崎'},{name:'大分'},{name:'佐賀'},{name:'宮崎'},{name:'沖縄',hot:true}] }
 ];
 
@@ -300,9 +331,22 @@ const mapPos = {
   '鹿児島':[2,9],'宮崎':[3,9],'高知':[5,9],'徳島':[6,9],
   '沖縄':[1,10]
 };
-const regionColors = ['#38bdf8','#a78bfa','#2dd4bf','#fbbf24','#fb7185','#a3e635','#fb923c'];
+// 地方のURLスラッグと、全国ビューでのブロック配置 [列開始, 列終了, 行開始, 行終了]
+const regionSlugs = ['hokkaido','tohoku','kanto','hokuriku','tokai','kansai','chugoku','shikoku','kyushu'];
+const regionArea = [
+  [10,12,1,1], // 北海道
+  [10,12,2,2], // 東北
+  [10,12,3,3], // 関東
+  [7,9,2,2],   // 北陸・甲信越
+  [7,9,3,3],   // 東海
+  [5,6,3,3],   // 関西
+  [3,4,3,3],   // 中国
+  [3,4,4,4],   // 四国
+  [1,2,3,4]    // 九州・沖縄
+];
 
 let currentView = localStorage.getItem('uramap-view') || 'map';
+let currentRegion = null; // null = 全国ビュー
 
 function switchView(view) {
   currentView = view;
@@ -312,40 +356,82 @@ function switchView(view) {
 
 function applyView() {
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
-  document.getElementById('mapWrap').style.display = currentView === 'map' ? '' : 'none';
+  document.getElementById('mapView').style.display = currentView === 'map' ? '' : 'none';
   document.getElementById('prefList').style.display = currentView === 'list' ? '' : 'none';
 }
 
-function renderMap() {
-  document.getElementById('japanMap').innerHTML = regions.map((r, i) =>
-    r.prefs.map(p => {
-      const [col, row] = mapPos[p.name];
-      return `<div class="pref-btn map-cell rg${i}${p.hot ? ' hot' : ''}" style="grid-column:${col};grid-row:${row}" onclick="openModal('${p.name}')">${p.name}</div>`;
-    }).join('')
-  ).join('');
-  document.getElementById('mapLegend').innerHTML = regions.map((r, i) =>
-    `<span><i style="background:${regionColors[i]}"></i>${r.name}</span>`
-  ).join('');
+// 1県だけの地方（北海道）は中間ページを挟まず直接モーダルへ
+function openRegion(i) {
+  location.hash = regions[i].prefs.length === 1
+    ? `${currentCat}/${prefSlugs[regions[i].prefs[0].name]}`
+    : `${currentCat}/${regionSlugs[i]}`;
+}
+function backToJapan() { location.hash = currentCat; }
+
+function setRegion(i) {
+  currentRegion = i;
+  renderMapArea();
+}
+
+function renderMapArea() {
+  const area = document.getElementById('mapArea');
+  if (currentRegion === null) {
+    // 全国ビュー：地方ブロック
+    area.innerHTML = '<div class="region-map">' + regions.map((r, i) => {
+      const [c1, c2, r1, r2] = regionArea[i];
+      const hot = r.prefs.filter(p => p.hot).length;
+      return `<div class="region-block" style="grid-column:${c1}/${c2 + 1};grid-row:${r1}/${r2 + 1}" onclick="openRegion(${i})">
+        <span class="rb-name">${r.name.replace('・', '・<wbr>')}</span>
+        <span class="rb-count">${r.prefs.length}県${hot ? ' &#x1F525;' + hot : ''}</span>
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    // 地方ビュー：県タイル（全国地図の位置関係を保ったまま切り出し）
+    const r = regions[currentRegion];
+    const cols = r.prefs.map(p => mapPos[p.name][0]);
+    const rows = r.prefs.map(p => mapPos[p.name][1]);
+    const minC = Math.min(...cols), maxC = Math.max(...cols), minR = Math.min(...rows);
+    area.innerHTML = `
+      <div class="detail-head">
+        <button class="back-btn" onclick="backToJapan()">&#x2190; 全国</button>
+        <span class="detail-title">${r.name}</span>
+      </div>
+      <div class="pref-map" style="grid-template-columns:repeat(${maxC - minC + 1},minmax(64px,108px))">` +
+      r.prefs.map(p => {
+        const [c, rw] = mapPos[p.name];
+        return `<div class="map-cell${p.hot ? ' hot' : ''}" style="grid-column:${c - minC + 1};grid-row:${rw - minR + 1}" onclick="openModal('${p.name}')">${p.name}</div>`;
+      }).join('') + '</div>';
+  }
 }
 
 function showSite() {
   document.getElementById('ageGate').classList.add('hidden');
   document.getElementById('mainContent').style.display = 'block';
-  requestAnimationFrame(() => { renderList(); renderMap(); applyView(); applyHash(); });
+  renderList(); applyView(); applyHash();
 }
 
 // URLハッシュを読んで画面状態を復元する（戻る/進むボタンにも対応）
+// #カテゴリ → 全国 / #カテゴリ/地方 → 県タイル / #カテゴリ/県 → モーダル
 function applyHash() {
   const parts = decodeURIComponent(location.hash.slice(1)).split('/');
   const cat = catConfig[parts[0]] ? parts[0] : 'ura';
   setCat(cat);
-  const pref = slugToPref[parts[1] || ''];
+  const key = parts[1] || '';
+  const label = catConfig[cat].label;
+  const pref = slugToPref[key];
+  const regionIdx = regionSlugs.indexOf(key);
   if (pref) {
+    setRegion(regions.findIndex(r => r.name === prefRegion[pref]));
     showModal(pref);
-    document.title = `${pref}の${catConfig[cat].label} | UraMap`;
-  } else {
+    document.title = `${pref}の${label} | UraMap`;
+  } else if (regionIdx >= 0) {
+    setRegion(regionIdx);
     hideModal();
-    document.title = `UraMap - ${catConfig[cat].label} 地域検索ポータル`;
+    document.title = `${regions[regionIdx].name}の${label} | UraMap`;
+  } else {
+    setRegion(null);
+    hideModal();
+    document.title = `UraMap - ${label} 地域検索ポータル`;
   }
 }
 
@@ -364,10 +450,17 @@ function renderList() {
   `).join('');
 }
 
-// タブ・都道府県クリックはURLハッシュを変えるだけ。実際の描画はapplyHashが行う
-function switchCat(cat) { setCat(cat); location.hash = cat; }
+// タブ・地方・都道府県クリックはURLハッシュを変えるだけ。実際の描画はapplyHashが行う
+function switchCat(cat) {
+  setCat(cat);
+  location.hash = currentRegion === null ? cat : `${cat}/${regionSlugs[currentRegion]}`;
+}
 function openModal(pref) { location.hash = `${currentCat}/${prefSlugs[pref]}`; }
-function closeModal() { location.hash = currentCat; }
+function closeModal() {
+  // 1県だけの地方は地方ビューが無いので全国へ戻す（地方スラッグに飛ばすとモーダルが再度開いてしまう）
+  const r = currentRegion === null ? null : regions[currentRegion];
+  location.hash = r && r.prefs.length > 1 ? `${currentCat}/${regionSlugs[currentRegion]}` : currentCat;
+}
 
 function setCat(cat) {
   currentCat = cat;
